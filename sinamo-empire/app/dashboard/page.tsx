@@ -2,17 +2,14 @@
 import { useState, useEffect, useRef } from "react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, limit } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [days, setDays] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    // 建国日（2026/01/21）からの日数を計算
     const foundingDate = new Date("2026-01-21");
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - foundingDate.getTime());
@@ -20,7 +17,6 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    // チャットのリアルタイム受信
     const q = query(collection(db, "messages"), orderBy("createdAt", "asc"), limit(100));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -32,85 +28,87 @@ export default function Dashboard() {
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
-    try {
-      await addDoc(collection(db, "messages"), {
-        text: newMessage,
-        sender: "帝国市民",
-        createdAt: serverTimestamp(),
-      });
-      setNewMessage("");
-    } catch (error) {
-      console.error(error);
-      alert("送信失敗：権限を確認してください");
-    }
+    await addDoc(collection(db, "messages"), {
+      text: newMessage,
+      sender: "帝国市民",
+      createdAt: serverTimestamp(),
+    });
+    setNewMessage("");
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#0f172a" }}>
-      {/* ナビゲーション */}
-      <nav style={{ padding: "15px 20px", background: "rgba(30, 41, 59, 0.95)", borderBottom: "1px solid #334155", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
+    <div style={{ backgroundColor: "#020617", minHeight: "100vh", color: "#f8fafc", fontFamily: "'Inter', sans-serif" }}>
+      {/* ヘッダー */}
+      <nav style={{ padding: "15px 25px", background: "#0f172a", borderBottom: "2px solid #38bdf8", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: "1.2rem", color: "#38bdf8", fontWeight: "800", letterSpacing: "1px" }}>SINAMO EMPIRE</h1>
-          <span style={{ fontSize: "0.7rem", color: "#94a3b8", letterSpacing: "0.5px" }}>EST. 2026 - DAY {days}</span>
+          <h1 style={{ margin: 0, fontSize: "1.4rem", color: "#38bdf8", fontWeight: "900", letterSpacing: "2px" }}>SINAMO EMPIRE CENTRAL</h1>
+          <p style={{ margin: 0, fontSize: "0.7rem", color: "#64748b" }}>FOUNDED: 2026-01-21 | DAY {days}</p>
         </div>
-        <button onClick={() => router.push("/")} style={{ background: "transparent", border: "1px solid #ef4444", color: "#ef4444", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "0.8rem", transition: "all 0.2s" }}>
-          LOGOUT
-        </button>
+        <div style={{ display: "flex", gap: "15px" }}>
+          <a href="https://battlefy.com/algs" target="_blank" style={{ color: "#38bdf8", fontSize: "0.8rem", textDecoration: "none", border: "1px solid #38bdf8", padding: "5px 10px", borderRadius: "4px" }}>ALGS INFO</a>
+          <a href="https://x.com" target="_blank" style={{ color: "#f8fafc", fontSize: "0.8rem", textDecoration: "none", border: "1px solid #475569", padding: "5px 10px", borderRadius: "4px" }}>X / TWITTER</a>
+        </div>
       </nav>
 
-      <div style={{ flex: 1, maxWidth: "800px", margin: "0 auto", width: "100%", padding: "20px", display: "flex", flexDirection: "column" }}>
+      <div style={{ maxWidth: "1000px", margin: "20px auto", padding: "0 20px", display: "grid", gridTemplateColumns: "1fr 300px", gap: "20px" }}>
         
-        {/* ステータスパネル */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
-          <div style={{ background: "#1e293b", padding: "15px", borderRadius: "8px", border: "1px solid #334155" }}>
-            <p style={{ margin: 0, fontSize: "0.7rem", color: "#64748b" }}>SYSTEM STATUS</p>
-            <p style={{ margin: "5px 0 0", fontSize: "1rem", fontWeight: "bold", color: "#10b981", display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "8px", height: "8px", background: "#10b981", borderRadius: "50%", boxShadow: "0 0 8px #10b981" }}></span> ONLINE
-            </p>
-          </div>
-          <div style={{ background: "#1e293b", padding: "15px", borderRadius: "8px", border: "1px solid #334155" }}>
-            <p style={{ margin: 0, fontSize: "0.7rem", color: "#64748b" }}>TOTAL MESSAGES</p>
-            <p style={{ margin: "5px 0 0", fontSize: "1rem", fontWeight: "bold", color: "#f8fafc" }}>{messages.length}</p>
+        {/* メイン：チャットエリア */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ background: "#0f172a", borderRadius: "12px", height: "600px", display: "flex", flexDirection: "column", border: "1px solid #1e293b", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              {messages.map((m) => (
+                <div key={m.id} style={{ alignSelf: "flex-start", maxWidth: "80%" }}>
+                  <div style={{ background: "#1e293b", padding: "10px 15px", borderRadius: "0 12px 12px 12px", border: "1px solid #334155" }}>
+                    {m.text}
+                  </div>
+                  <span style={{ fontSize: "0.6rem", color: "#475569", marginTop: "4px", display: "block" }}>{m.sender} - SYSTEM_LOG</span>
+                </div>
+              ))}
+              <div ref={scrollRef} />
+            </div>
+
+            <form onSubmit={sendMessage} style={{ padding: "20px", borderTop: "1px solid #1e293b", display: "flex", gap: "10px" }}>
+              <input 
+                value={newMessage} 
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="帝国通信回線へメッセージを入力..."
+                style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "1px solid #334155", background: "#020617", color: "white", outline: "none" }}
+              />
+              <button type="submit" style={{ padding: "12px 24px", background: "#38bdf8", color: "#020617", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>送信</button>
+            </form>
           </div>
         </div>
 
-        {/* チャットエリア */}
-        <div style={{ flex: 1, background: "#1e293b", borderRadius: "12px", border: "1px solid #334155", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)" }}>
-          <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            {messages.length === 0 && <p style={{textAlign: "center", color: "#475569", marginTop: "20px", fontSize: "0.9rem"}}>No communications yet.</p>}
-            {messages.map((m) => (
-              <div key={m.id} style={{ alignSelf: m.sender === "Admin" ? "flex-end" : "flex-start", maxWidth: "85%" }}>
-                <span style={{ fontSize: "0.6rem", color: "#64748b", marginLeft: "2px", marginBottom: "2px", display: "block" }}>{m.sender}</span>
-                <div style={{ 
-                  background: m.sender === "Admin" ? "#0ea5e9" : "#334155", 
-                  color: "#f8fafc",
-                  padding: "10px 14px", 
-                  borderRadius: "8px", 
-                  borderTopLeftRadius: m.sender === "Admin" ? "8px" : "2px",
-                  borderTopRightRadius: m.sender === "Admin" ? "2px" : "8px",
-                  lineHeight: "1.5",
-                  fontSize: "0.95rem",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                }}>
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            <div ref={scrollRef} />
+        {/* サイドバー：重要リンク集 */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ background: "#0f172a", padding: "20px", borderRadius: "12px", border: "1px solid #38bdf8" }}>
+            <h3 style={{ margin: "0 0 15px 0", fontSize: "0.9rem", color: "#38bdf8" }}>🏁 ALGS PORTAL</h3>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+              <li><a href="https://battlefy.com/algs" target="_blank" style={{ color: "#f8fafc", fontSize: "0.85rem", textDecoration: "none" }}>・Battlefy (公式トーナメント)</a></li>
+              <li><a href="https://liquipedia.net/apexlegends/Main_Page" target="_blank" style={{ color: "#f8fafc", fontSize: "0.85rem", textDecoration: "none" }}>・Liquipedia (詳細データ)</a></li>
+            </ul>
           </div>
 
-          {/* 入力フォーム */}
-          <form onSubmit={sendMessage} style={{ padding: "15px", background: "#0f172a", borderTop: "1px solid #334155", display: "flex", gap: "10px" }}>
-            <input 
-              value={newMessage} 
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type command..."
-              style={{ flex: 1, padding: "12px", borderRadius: "6px", border: "1px solid #334155", background: "#1e293b", color: "white", outline: "none", fontSize: "16px" }}
-            />
-            <button type="submit" style={{ padding: "0 20px", background: "#38bdf8", color: "#0f172a", border: "none", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", transition: "opacity 0.2s" }}>
-              SEND
-            </button>
-          </form>
+          <div style={{ background: "#0f172a", padding: "20px", borderRadius: "12px", border: "1px solid #10b981" }}>
+            <h3 style={{ margin: "0 0 15px 0", fontSize: "0.9rem", color: "#10b981" }}>📌 OPERA PINBOARD</h3>
+            <a href="https://pinboard.opera.com/view/95a0131b-6083-4905-8cdf-33066a324879" target="_blank" style={{ 
+              display: "block", 
+              padding: "10px", 
+              background: "#020617", 
+              color: "#10b981", 
+              borderRadius: "6px", 
+              fontSize: "0.75rem", 
+              textDecoration: "none",
+              border: "1px solid #10b981",
+              textAlign: "center"
+            }}>
+              ピンボードを閲覧する
+            </a>
+          </div>
+
+          <div style={{ background: "#1e293b", padding: "15px", borderRadius: "12px", fontSize: "0.8rem", color: "#94a3b8" }}>
+            <p style={{ margin: 0 }}>※ログアウト機能は撤廃されました。セッションは帝国によって永続的に維持されます。</p>
+          </div>
         </div>
       </div>
     </div>
