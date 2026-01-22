@@ -1,9 +1,18 @@
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "SINAMO EMPIRE",
+  description: "Official Central",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ja">
-      <body style={{ margin: 0, backgroundColor: "#0f172a", color: "#f8fafc", fontFamily: "sans-serif" }}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
